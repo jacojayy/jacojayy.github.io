@@ -3,57 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>star - Game Configurations</title>
+    <title>Star Game Configurations</title>
     <style>
         body {
-            background: linear-gradient(to bottom, #3e1f78, #d6d1e0);
             font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
             color: #333;
         }
-        .badge {
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin: 5px;
+        header {
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            padding: 20px;
+            text-align: center;
+            font-size: 2em;
             color: white;
         }
-        .badge-perfect { background-color: #3fb950; }
-        .badge-playable { background-color: #d29922; }
-        .badge-decent { background-color: #fb8500; }
-        .badge-broken { background-color: #f85149; }
-        .config-card { border: 1px solid #ccc; padding: 15px; margin: 15px; border-radius: 5px; }
-    </style>
-    <script>
-        async function fetchGameConfigurations() {
-            const response = await fetch('games.json');
-            const games = await response.json();
-            const emVersion = await fetch('https://api.github.com/repos/jacojayy/star/releases/latest');
-            const emulatorVersion = await emVersion.json();
-            const version = emulatorVersion.tag_name;
-
-            const configContainer = document.getElementById('configurations');
-            games.forEach(game => {
-                const card = document.createElement('div');
-                card.className = 'config-card';
-                card.innerHTML = `<h3>${game.name}</h3>
-                    <p>GPU: ${game.gpu}</p>
-                    <p>Wine: ${game.wine}</p>
-                    <p>Resolution: ${game.resolution}</p>
-                    <p>DXVK: ${game.dxvk}</p>
-                    <p>VKD3D: ${game.vkd3d}</p>
-                    <p>FEXCore: ${game.fexcore}</p>
-                    <p>Preset: ${game.preset}</p>
-                    <p>Env Vars: ${game.env_vars}</p>
-                    <p>Notes: ${game.notes}</p>
-                    <p>Status: <span class='badge badge-${game.status.toLowerCase()}'>${game.status}</span></p>
-                    <p>Emulator Version: ${version}</p>`;
-                configContainer.appendChild(card);
-            });
+        .search-container {
+            margin: 20px;
+            text-align: center;
         }
-        window.onload = fetchGameConfigurations;
-    <\/script>
+        .game-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            width: calc(30% - 40px);
+            vertical-align: top;
+        }
+        .badge {
+            padding: 5px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+        }
+        .perfect { background-color: green; }
+        .playable { background-color: yellow; color: black; }
+        .decent { background-color: orange; }
+        .broken { background-color: red; }
+    </style>
 </head>
 <body>
-    <h1>Game Configurations</h1>
-    <div id="configurations"></div>
+
+<header>Star - Game Configurations</header>
+
+<div class="search-container">
+    <input type="text" id="search" placeholder="Search for games...">
+</div>
+
+<div id="games-container"></div>
+
+<script>
+async function fetchData() {
+    const gamesResponse = await fetch('games.json');
+    const gamesData = await gamesResponse.json();
+    const starVersionResponse = await fetch('https://api.github.com/repos/YourGitHubUsername/yourrepo/releases/latest');
+    const starVersionData = await starVersionResponse.json();
+    const latestVersion = starVersionData.tag_name;
+
+    return { games: gamesData, latestVersion };
+}
+
+function displayGames(games, latestVersion) {
+    const container = document.getElementById('games-container');
+    container.innerHTML = '';
+    games.forEach(game => {
+        const card = document.createElement('div');
+        card.className = 'game-card';
+
+        const badgeClass = game.status === 'Perfect' ? 'perfect' : game.status === 'Playable' ? 'playable' : game.status === 'Decent' ? 'decent' : 'broken';
+        card.innerHTML = `
+            <h3>${game.name}</h3>
+            <p><strong>GPU:</strong> ${game.gpu}</p>
+            <p><strong>Wine:</strong> ${game.wine}</p>
+            <p><strong>Resolution:</strong> ${game.resolution}</p>
+            <p><strong>DXVK:</strong> ${game.dxvk}</p>
+            <p><strong>VKD3D:</strong> ${game.vkd3d}</p>
+            <p><strong>FEXCore:</strong> ${game.fexcore}</p>
+            <p><strong>Preset:</strong> ${game.preset}</p>
+            <p><strong>Env Vars:</strong> ${game.env_vars}</p>
+            <p><strong>Emulator Version:</strong> ${game.emulator_version}</p>
+            <span class='badge ${badgeClass}'>${game.status}</span>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+document.getElementById('search').addEventListener('input', (event) => {
+    const searchTerm = event.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.game-card');
+    cards.forEach(card => {
+        const gameName = card.querySelector('h3').textContent.toLowerCase();
+        if (gameName.includes(searchTerm)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+
+fetchData().then(data => displayGames(data.games, data.latestVersion));
+</script>
 </body>
 </html>
